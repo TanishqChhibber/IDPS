@@ -1,0 +1,3 @@
+Attack Type,Payload
+SQL Injection,' OR '1'='1' --
+SQL Injection,"' UNION SELECT username, password FROM users --"
