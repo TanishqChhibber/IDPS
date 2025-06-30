@@ -1,55 +1,23 @@
-import os
-import time
+# monitor.py
 import psutil
+import time
+import logging
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-def monitor_network_connections(interval=5, log_file="./logs/network_connections_log.txt"):
-    previous_connections = set()
+def log_abnormal_processes(threshold=50.0):
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+        try:
+            if proc.info['cpu_percent'] > threshold:
+                logging.warning(f"High CPU usage: {proc.info['name']} (PID: {proc.info['pid']}) using {proc.info['cpu_percent']}%")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
 
-    while True:
-        current_connections = set()
-        for connection in psutil.net_connections(kind="inet"):
-            try:
-                laddr = connection.laddr
-                raddr = connection.raddr
-                status = connection.status
-                if raddr:
-                    current_connections.add((laddr, raddr, status))
-            except (psutil.AccessDenied, psutil.ZombieProcess, psutil.NoSuchProcess):
-                continue
+def log_network_connections():
+    conns = psutil.net_connections()
+    for conn in conns:
+        if conn.status == 'ESTABLISHED' and conn.raddr:
+            logging.info(f"Active connection: {conn.laddr.ip}:{conn.laddr.port} -> {conn.raddr.ip}:{conn.raddr.port}")
 
-        new_connections = current_connections - previous_connections
-        for connection in new_connections:
-            laddr, raddr, status = connection
-            with open(log_file, "a") as f:
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                f.write(f"{timestamp} - {laddr} -> {raddr} - {status}\n")
-
-        previous_connections = current_connections
-        time.sleep(interval)
-
-
-
-def monitor_system_processes(interval=60, cpu_threshold=80, mem_threshold=80, log_file="./logs/processes_log.txt"):
-    while True:
-        for process in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
-            try:
-                pid = process.info["pid"]
-                name = process.info["name"]
-                cpu_percent = process.info["cpu_percent"]
-                mem_percent = process.info["memory_percent"]
-
-                # Handle None values for cpu_percent and mem_percent
-                if cpu_percent is None:
-                    cpu_percent = 0
-                if mem_percent is None:
-                    mem_percent = 0
-
-                if cpu_percent > cpu_threshold or mem_percent > mem_threshold:
-                    with open(log_file, "a") as f:
-                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                        f.write(f"{timestamp} - {name} (PID: {pid}) - CPU: {cpu_percent}%, MEM: {mem_percent}%\n")
-            except (psutil.AccessDenied, psutil.ZombieProcess, psutil.NoSuchProcess):
-                continue
-
-        time.sleep(interval)
+def start_system_monitoring(interval=10):
+    logging

