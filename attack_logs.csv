@@ -248,3 +248,15 @@ Timestamp,Attack Type,Target IP,Target Port,Status
 2025-06-30 22:59:41,UDP Flood,127.0.0.1,445,Launched
 2025-06-30 22:59:42,Slowloris,127.0.0.1,445,Launched
 2025-06-30 22:59:43,Fake Bot Traffic,127.0.0.1,-,Launched
+2025-06-30 23:00:43,SQL Injection,127.0.0.1,-,Payload=' OR 1=1 --
+2025-06-30 23:00:44,SQL Injection,127.0.0.1,-,Payload=admin' --
+2025-06-30 23:00:45,SQL Injection,127.0.0.1,-,Payload=' OR 'a'='a
+2025-06-30 23:00:46,Fake Bot Traffic,127.0.0.1,-,Launched
+2025-06-30 23:00:46,SYN Flood,127.0.0.1,53,Launched
+2025-06-30 23:00:47,UDP Flood,127.0.0.1,53,Launched
+2025-06-30 23:00:48,Slowloris,127.0.0.1,53,Launched
+2025-06-30 23:00:49,Fake Bot Traffic,127.0.0.1,-,Launched
+2025-06-30 23:00:49,SYN Flood,127.0.0.1,445,Launched
+2025-06-30 23:00:50,UDP Flood,127.0.0.1,445,Launched
+2025-06-30 23:00:51,Slowloris,127.0.0.1,445,Launched
+2025-06-30 23:00:52,Fake Bot Traffic,127.0.0.1,-,Launched
