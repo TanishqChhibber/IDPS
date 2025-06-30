@@ -110,3 +110,23 @@ This IDPS provides an integrated approach to intrusion detection and prevention,
 
 ## Note
 This is the first stage of IDPS. I have a lot of improvements to do, including connecting my model with Snort for better performance and many more. Also, I will keep the GitHub repository updated!!
+
+## File Descriptions
+
+- **attack_simulator.py**: Simulates various network attacks (SYN Flood, UDP Flood, Slowloris, SQL Injection, Fake Bot Traffic) and logs them. Can run in a continuous loop for ongoing data generation.
+- **detector.py**: Main detection engine. Parses logs, labels events, retrains the Isolation Forest anomaly detection model, and logs detection accuracy in real time.
+- **idps.py**: Main orchestrator or entry point for the IDPS system.
+- **monitor.py**: Additional monitoring utilities or scripts.
+- **utils.py**: Utility functions for data processing, feature extraction, and other helper tasks.
+- **training.py**: Contains model training logic, may be used by `detector.py` or for manual retraining.
+- **dasbard.py**: (Likely a typo for 'dashboard.py') Dashboard code for real-time monitoring of system metrics.
+- **terminal_dashboard.py**: Terminal-based dashboard for live monitoring.
+- **live_accuracy_plot.py**: Displays a live-updating graph of detection accuracy using matplotlib.
+- **conversion.py**: Converts log files into CSV format for model training.
+
+### Data & Log Files
+- **attack_logs.txt**: Text log of all simulated attacks.
+- **attack_logs.csv**: CSV log of all simulated attacks (structured).
+- **idps_data.csv**: Labeled dataset used for model training. Parsed from attack logs.
+- **accuracy_log.csv**: Logs detection accuracy over time for monitoring and analysis.
+- **network_logs.csv, balanced_logs.csv, fake_bot_traffic.csv, sql_injection_logs.csv**: Additional datasets for training, testing, or simulation.
