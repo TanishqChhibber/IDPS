@@ -15,13 +15,13 @@ The attack simulation module generates malicious traffic and behaviors to test t
 
 - **NOTE**: These attack simulators can be illegal in some cases as it can greatly decrease the wifi speed. So kindly have some sort of permissions before executing it.
 
-### 2. Anomaly Detection System
-A **Machine Learning-based anomaly detection system** using **Isolation Forest** to detect suspicious activities in system logs and network traffic. It includes:
+
+### 2. Supervised Anomaly Detection System
+A **Machine Learning-based anomaly detection system** using a **Random Forest Classifier** to detect suspicious activities in system logs and network traffic. It includes:
 - **Feature extraction** from network traffic and system events.
-- **Unsupervised learning approach** to classify deviations from normal behavior.
-- **Threshold-based alerting mechanism** for detected anomalies.
-- **Accuracy Calculation**: Evaluates the model's effectiveness by comparing predictions with labeled data.
-- **Adaptive Learning**: Continuously updates the model with new data to improve detection accuracy.
+- **Supervised learning approach** to classify normal and attack traffic using labeled data.
+- **Accuracy Calculation**: Evaluates the model's effectiveness by comparing predictions with labeled data and logs accuracy in `accuracy_log.csv`.
+- **Live accuracy plotting**: Visualize accuracy in real time using `live_accuracy_plot.py`.
 
 ### 3. Filesystem Monitoring System (Future Development)
 This module continuously monitors file system changes and logs malicious activities. It detects:
@@ -57,53 +57,51 @@ The IDPS has potential applications in several research areas:
 - **Zero-day Attack Detection**: Improving the IDPS's ability to detect previously unseen attacks through dynamic learning models.
 
 ## Installation & Usage
+
 ### Requirements
 - Python (Latest Version)
-- Scikit-learn
-- Pandas
-- NumPy
-- TensorFlow/PyTorch (for future deep learning integration)
+- scikit-learn
+- pandas
+- numpy
+- faker
 
-### Running the IDPS
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Manavagg2003/Intrusion-Detection-Prevention-System.git
+
+### Running the IDPS (Current Workflow)
+1. (Optional) Create and activate a virtual environment:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate
    ```
-2. Run the attack simulator:
-   ```bash
+2. Install required packages:
+   ```powershell
+   pip install scikit-learn pandas numpy faker
+   ```
+3. Generate labeled data by running the attack simulator:
+   ```powershell
    python attack_simulator.py
    ```
-3. Start the anomaly detection module:
-   ```bash
-   python detector.py
-   ```
-4. Finally run your IDS:
-   ```bash
-   python idps.py
-   ```
-
-5. To convert your logs into csv for model training:
-   ```bash
-   python conversion.py
-   ```
-
-6. To train your model:
-   ```bash
+   This will continuously generate labeled traffic in `idps_data.csv`.
+4. Train the supervised model and view accuracy:
+   ```powershell
    python training.py
    ```
-**Note**: 
-- Now you can just skip part 3 and 4 and just run **python idps.py**
-- And also skip part 2 and 6 and just run **python training.py**
+   This will train a Random Forest model and print a classification report with accuracy.
+5. (Optional) Visualize live accuracy:
+   ```powershell
+   python live_accuracy_plot.py
+   ```
 
 ## What each of these files do?
-- attack_simulator.py: Generates all types of attacks mentioned above.
-- conversion.py: Convert your log files into simple csv file for model training.
-- detector.py: Start the anomaly detection module.
-- idps.py: Main idps.
-- monitor.py: Create logs for network analysis and file analysis.
-- training.py: To train our isolation forest based idps model. You also get to chose if you want to start the attack_simulator.py then train the model or not.
 
-**My current accuracy after training the model with benchmark database and self-database after full day of training came out to be 99% for now**
+- attack_simulator.py: Generates labeled network traffic (normal and various attacks) and writes to `idps_data.csv`.
+- conversion.py: Convert your log files into simple csv file for model training (if needed).
+- detector.py: (Legacy/optional) Anomaly detection module.
+- idps.py: Main IDPS orchestrator.
+- monitor.py: Create logs for network analysis and file analysis.
+- training.py: Trains a supervised Random Forest model on `idps_data.csv` and prints accuracy/classification report.
+
+
+**Typical accuracy after training the model with generated and benchmark data is above 85-90%, depending on data quality and balance.**
 
 ## Conclusion
 This IDPS provides an integrated approach to intrusion detection and prevention, leveraging machine learning, real-time monitoring, and attack simulation. Future enhancements will improve detection accuracy, automation, and resilience against sophisticated cyber threats.

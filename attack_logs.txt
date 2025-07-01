@@ -340,3 +340,15 @@
 2025-06-30 23:00:50 - UDP Flood Attack on 127.0.0.1:445
 2025-06-30 23:00:51 - Slowloris Attack on 127.0.0.1:445
 2025-06-30 23:00:52 - Fake Bot Traffic Attack on 127.0.0.1
+2025-07-01 22:35:21 - SQL Injection Attack on 127.0.0.1
+2025-07-01 22:35:22 - SQL Injection Attack on 127.0.0.1
+2025-07-01 22:35:23 - SQL Injection Attack on 127.0.0.1
+2025-07-01 22:35:24 - Fake Bot Traffic Attack on 127.0.0.1
+2025-07-01 22:35:27 - SYN Flood Attack on 127.0.0.1:135
+2025-07-01 22:35:29 - UDP Flood Attack on 127.0.0.1:135
+2025-07-01 22:35:30 - Slowloris Attack on 127.0.0.1:135
+2025-07-01 22:35:31 - Fake Bot Traffic Attack on 127.0.0.1
+2025-07-01 22:35:32 - SYN Flood Attack on 127.0.0.1:445
+2025-07-01 22:35:33 - UDP Flood Attack on 127.0.0.1:445
+2025-07-01 22:35:34 - Slowloris Attack on 127.0.0.1:445
+2025-07-01 22:35:35 - Fake Bot Traffic Attack on 127.0.0.1
