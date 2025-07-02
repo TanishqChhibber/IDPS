@@ -21,8 +21,14 @@ def write_log(src, dst, protocol, label):
 
 def simulate_attack():
     attack_type = random.choice(["SYN", "UDP", "SQLi", "Slowloris", "Bot"])
+
     src_ip = random_ip()
-    dst_ip = TARGET_IP
+    # Use a random destination IP for attacks, not just TARGET_IP
+    # To keep some attacks on TARGET_IP, randomly choose between TARGET_IP and a random IP
+    if random.random() < 0.5:
+        dst_ip = TARGET_IP
+    else:
+        dst_ip = random_ip()
 
     if attack_type == "SYN":
         protocol = "TCP"
@@ -52,6 +58,9 @@ def simulate_normal():
 def run_simulation(duration_sec=60, attack_ratio=0.05):
     interval = 1  # 1 second interval
     total_events = duration_sec
+
+    # Increase attack_ratio for more frequent attacks
+    attack_ratio = 0.3  # 30% of events are attacks
 
     for i in range(total_events):
         if random.random() < attack_ratio:
